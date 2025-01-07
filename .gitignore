@@ -1,0 +1,7 @@
+tmp/
+static/css/style.css
+*_templ.go
+*_templ.txt
+internal/repository
+.env
+zenbin

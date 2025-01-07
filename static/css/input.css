@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input {
+  padding: .5rem .75rem;
+  border-width: 1px;
+}

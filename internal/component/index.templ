@@ -1,0 +1,132 @@
+package component
+
+import "github.com/dreamsofcode-io/zenbin/internal/repository"
+import "github.com/dreamsofcode-io/zenbin/internal/util/flash"
+
+templ page(title string) {
+<html lang="en" class="bg-zinc-900">
+  <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link href="/static/css/style.css" rel="stylesheet" />
+      <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+      <title>{ title }</title>
+    </head>
+    <body>
+      <main>{ children... }</main>
+    </body>
+</html>
+}
+
+templ branding() {
+  <a href="/" class="-m-1.5 p-1.5 mx-auto">
+    <span class="sr-only">Zenbin</span>
+    <img class="h-8 w-auto" src="/static/images/logo.svg" alt="" />
+  </a>
+}
+templ NotFound() {
+  @page("zenbin | Not Found") {
+    <div class="bg-gray-100 dark:bg-zinc-900 h-screen">
+      <div class="max-w-xl mx-auto flex-shrink text-center p-8 rounded-lg">
+        <div class="flex lg:flex-1">
+          @branding()
+        </div>
+        <h1 class="text-3xl max-w-lg mx-auto font-bold text-gray-800 dark:text-gray-100">
+          404 - No Snippet Found
+        </h1>
+        <p class="dark:text-zinc-400 text-sm font-medium mt-4">
+          Maybe you were given the wrong id?
+        </p>
+    </div>
+    </div>
+  }
+}
+
+
+templ Index() {
+  {{ errMsg, errExist := flash.GetFlashMessage(ctx, "error") }}
+  @page("Welcome!") {
+    <div class="bg-gray-100 dark:bg-zinc-900 h-screen">
+      <div class="max-w-xl mx-auto flex-shrink text-center p-8 rounded-lg">
+        <div class="flex lg:flex-1">
+          @branding()
+        </div>
+        <h1 class="text-3xl max-w-lg mx-auto font-bold text-gray-800 dark:text-gray-100">
+          Welcome to Zenbin
+        </h1>
+        <p class="dark:text-zinc-400 text-sm font-medium mt-4">
+          Share text / code snippets with your friends below
+          (Max size 1MB, Rate limited to 5 snippets per day per user)
+        </p>
+        if errExist {
+          <div class="mt-4 text-sm font-medium text-red-600">{errMsg}</div>
+        }
+        <form class="mt-4" method="POST">
+          <textarea
+            name="content"
+            class="w-full max-w-3xl h-1/2 p-4 text-sm font-mono text-gray-200 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 placeholder-gray-500"
+            placeholder="Paste your code here..."></textarea>
+          <button type="submit" class="select-none font-medium rounded tracking-tight flex gap-2 items-center justify-center whitespace-nowrap bg-zinc-800 text-zinc-50 shadow-sm hover:bg-zinc-800/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 px-3.5 py-[7px] text-sm mt-2">Paste </button>
+        </form>
+      </div>
+    </div>
+  }
+}
+
+templ SnippetPage(snippet repository.Snippet, uri string) {
+  @page("Snippet") {
+    <div class="bg-gray-100 dark:bg-zinc-900 h-screen">
+      <div class="max-w-xl mx-auto flex-shrink text-center p-8 rounded-lg">
+        <div class="flex lg:flex-1">
+          @branding()
+        </div>
+        <h1 class="text-3xl max-w-lg mx-auto font-bold text-gray-800 dark:text-gray-100">
+          Welcome to Zenbin
+        </h1>
+        <p class="dark:text-zinc-400 text-sm font-medium mt-4">
+          To share this snippet
+        </p>
+        <div class="flex items-center justify-between space-x-4 p-4 border rounded-md shadow-sm bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-400 text-sm font-medium mt-4">
+          <span id="snippet-url">{uri}</span>
+          <button
+            hx-trigger="click"
+            hx-on:click="copyToClipboard(event, 'snippet-url')"
+            class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 dark:bg-zinc-600 rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
+            Copy
+          </button>
+        </div>
+        <script>
+        function copyToClipboard(event, id) {
+          const button = event.target;
+          const urlText = document.getElementById(id).textContent;
+
+          navigator.clipboard.writeText(urlText)
+            .then(() => {
+              button.textContent = 'Copied!';
+              setTimeout(() => {
+                button.textContent = 'Copy';
+              }, 2000); // Reset the button text after 2 seconds
+            })
+            .catch(err => {
+              console.error('Failed to copy: ', err);
+              button.textContent = 'Error';
+              setTimeout(() => {
+                button.textContent = 'Copy';
+              }, 2000);
+            });
+        }
+        </script>
+        <div class="mt-4">
+          <textarea readonly
+            id="text-content"
+            class="w-full max-w-3xl h-1/2 p-4 text-sm font-mono text-gray-200 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 placeholder-gray-500">
+            { snippet.Content }
+          </textarea>
+          <button hx-on:click="copyToClipboard(event, 'text-content')" class="select-none font-medium rounded tracking-tight flex gap-2 items-center justify-center whitespace-nowrap bg-zinc-800 text-zinc-50 shadow-sm hover:bg-zinc-800/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 px-3.5 py-[7px] text-sm mt-2">Copy </button>
+
+        </div>
+      </div>
+    </div>
+  }
+}
