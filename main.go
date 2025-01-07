@@ -15,7 +15,7 @@ import (
 	"github.com/dreamsofcode-io/zenbin/internal/app"
 )
 
-//go:embed static database/migrations
+//go:embed static
 var files embed.FS
 
 func main() {
