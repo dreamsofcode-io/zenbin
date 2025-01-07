@@ -8,15 +8,10 @@ import (
 
 	"github.com/dreamsofcode-io/zenbin/internal/component"
 	"github.com/dreamsofcode-io/zenbin/internal/handler"
-	"github.com/dreamsofcode-io/zenbin/internal/repository"
 )
 
-// TODO - This function is where your pages are loaded.
 func (a *App) loadPages(router *http.ServeMux) {
-	repo := repository.New(a.db)
-	h := handler.New(a.logger, repo, a.db, a.ipresolver)
-	// This is your index route, i.e. /. It has an odd syntax in
-	// the go serve mux
+	h := handler.New(a.logger, a.rdb, a.ipresolver)
 	router.Handle("GET /{$}", handler.Component(component.Index()))
 
 	router.HandleFunc("POST /{$}", h.CreateSnippet)

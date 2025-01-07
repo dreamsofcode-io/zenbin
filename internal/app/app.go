@@ -7,11 +7,11 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 
-	"github.com/dreamsofcode-io/zenbin/internal/database"
 	"github.com/dreamsofcode-io/zenbin/internal/middleware"
 	"github.com/dreamsofcode-io/zenbin/internal/service/realip"
 	"github.com/dreamsofcode-io/zenbin/internal/util/flash"
@@ -22,7 +22,7 @@ type App struct {
 	config     Config
 	files      fs.FS
 	logger     *slog.Logger
-	db         *pgxpool.Pool
+	rdb        *redis.Client
 	ipresolver *realip.Service
 }
 
@@ -36,10 +36,23 @@ func must[T any](x T, err error) T {
 
 // New creates a new instance of the application.
 func New(logger *slog.Logger, config Config, files fs.FS) (*App, error) {
+	redisURL, ok := os.LookupEnv("REDIS_URL")
+	if !ok {
+		return nil, fmt.Errorf("Must set redis URL")
+	}
+
+	cfg, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse redis url: %w", err)
+	}
+
+	rdb := redis.NewClient(cfg)
+
 	return &App{
 		config:     config,
 		logger:     logger,
 		files:      files,
+		rdb:        rdb,
 		ipresolver: realip.New(realip.LastXFFIPResolver),
 	}, nil
 }
@@ -48,12 +61,9 @@ func New(logger *slog.Logger, config Config, files fs.FS) (*App, error) {
 // will run until either the given context is cancelled, or
 // the application is ended.
 func (a *App) Start(ctx context.Context) error {
-	db, err := database.Connect(ctx, a.logger, a.files)
-	if err != nil {
-		return fmt.Errorf("connect to database: %w", err)
+	if err := a.rdb.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("ping redis: %w", err)
 	}
-
-	a.db = db
 
 	router, err := a.loadRoutes()
 	if err != nil {

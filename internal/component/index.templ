@@ -1,6 +1,5 @@
 package component
 
-import "github.com/dreamsofcode-io/zenbin/internal/repository"
 import "github.com/dreamsofcode-io/zenbin/internal/util/flash"
 
 templ page(title string) {
@@ -74,7 +73,7 @@ templ Index() {
   }
 }
 
-templ SnippetPage(snippet repository.Snippet, uri string) {
+templ SnippetPage(content string, uri string) {
   @page("Snippet") {
     <div class="bg-gray-100 dark:bg-zinc-900 h-screen">
       <div class="max-w-xl mx-auto flex-shrink text-center p-8 rounded-lg">
@@ -121,7 +120,7 @@ templ SnippetPage(snippet repository.Snippet, uri string) {
           <textarea readonly
             id="text-content"
             class="w-full max-w-3xl h-1/2 p-4 text-sm font-mono text-gray-200 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 placeholder-gray-500">
-            { snippet.Content }
+            { content }
           </textarea>
           <button hx-on:click="copyToClipboard(event, 'text-content')" class="select-none font-medium rounded tracking-tight flex gap-2 items-center justify-center whitespace-nowrap bg-zinc-800 text-zinc-50 shadow-sm hover:bg-zinc-800/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-600 px-3.5 py-[7px] text-sm mt-2">Copy </button>
 

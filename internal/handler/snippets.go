@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/dreamsofcode-io/zenbin/internal/component"
-	"github.com/dreamsofcode-io/zenbin/internal/repository"
 	"github.com/dreamsofcode-io/zenbin/internal/service/realip"
 	"github.com/dreamsofcode-io/zenbin/internal/util/flash"
 	"github.com/dreamsofcode-io/zenbin/internal/util/shortid"
@@ -19,21 +18,18 @@ import (
 
 type Handler struct {
 	logger     *slog.Logger
-	repo       *repository.Queries
-	db         *pgxpool.Pool
+	rdb        *redis.Client
 	ipResolver *realip.Service
 }
 
 func New(
 	logger *slog.Logger,
-	repo *repository.Queries,
-	db *pgxpool.Pool,
+	rdb *redis.Client,
 	ipService *realip.Service,
 ) *Handler {
 	return &Handler{
 		logger:     logger,
-		repo:       repo,
-		db:         db,
+		rdb:        rdb,
 		ipResolver: ipService,
 	}
 }
@@ -60,27 +56,38 @@ func (h *Handler) CreateSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := h.repo.CheckSnippet24Hours(ctx, ip)
-	if err != nil {
-		h.logger.Error("failed to check snippet", slog.Any("error", err))
+	const maxCount = 5
+
+	countKey := fmt.Sprintf("counts:%s", time.Now().UTC().Truncate(time.Hour*24))
+
+	p := h.rdb.Pipeline()
+	incrRes := p.HIncrBy(ctx, countKey, ip, 1)
+	p.ExpireXX(ctx, countKey, time.Hour*25)
+
+	if _, err := p.Exec(ctx); err != nil {
+		h.logger.Error("failed to get counts", slog.Any("error", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	const maxCount = 5
+	count, err := incrRes.Result()
+	if err != nil {
+		h.logger.Error("failed to get counts", slog.Any("error", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	if count >= maxCount {
 		flash.SetFlashMessage(w, "error", "Snippets exceeded for the day, try again tomorrow")
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
-	snippet, err := h.repo.InsertSnippetCheck(ctx, repository.InsertSnippetCheckParams{
-		ID:      id,
-		Content: content,
-		Ip:      ip,
-	})
-	if err != nil {
-		h.logger.Error("failed to insert snippet", slog.Any("error", err))
+	p = h.rdb.Pipeline()
+	p.HSet(ctx, id.String(), "ip", ip, "content", content, "created_at", time.Now().UTC())
+	p.Expire(ctx, id.String(), time.Hour*24*7)
+
+	if _, err := p.Exec(ctx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -91,9 +98,7 @@ func (h *Handler) CreateSnippet(w http.ResponseWriter, r *http.Request) {
 		scheme = "https"
 	}
 
-	uri := fmt.Sprintf("%s://%s/%s", scheme, host, shortid.GetShortID(snippet.ID))
-
-	fmt.Println(uri)
+	uri := fmt.Sprintf("%s://%s/%s", scheme, host, shortid.GetShortID(id))
 
 	http.Redirect(w, r, uri, http.StatusFound)
 }
@@ -109,13 +114,13 @@ func (h *Handler) GetSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snippet, err := h.repo.FindSnippetByID(ctx, id)
-	if errors.Is(err, pgx.ErrNoRows) {
+	content, err := h.rdb.HGet(ctx, id.String(), "content").Result()
+	if errors.Is(err, redis.Nil) {
 		w.WriteHeader(http.StatusNotFound)
 		component.NotFound().Render(ctx, w)
 		return
-	}
-	if err != nil {
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -125,7 +130,7 @@ func (h *Handler) GetSnippet(w http.ResponseWriter, r *http.Request) {
 		scheme = "https"
 	}
 
-	uri := fmt.Sprintf("%s://%s/%s", scheme, host, shortid.GetShortID(snippet.ID))
+	uri := fmt.Sprintf("%s://%s/%s", scheme, host, shortID)
 
-	component.SnippetPage(snippet, uri).Render(ctx, w)
+	component.SnippetPage(content, uri).Render(ctx, w)
 }
