@@ -30,10 +30,7 @@ live/sync_assets:
 
 # start all 5 watch processes in parallel.
 dev:
-	make -j5 live/sqlc live/tailwind live/templ live/server live/sync_assets
-
-live/sqlc:
-	sqlc generate
+	make -j4 live/tailwind live/templ live/server live/sync_assets
 
 build:
 	go generate

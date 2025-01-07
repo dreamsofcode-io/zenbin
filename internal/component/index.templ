@@ -56,7 +56,9 @@ templ Index() {
         </h1>
         <p class="dark:text-zinc-400 text-sm font-medium mt-4">
           Share text / code snippets with your friends below
-          (Max size 1MB, Rate limited to 5 snippets per day per user)
+        </p>
+        <p class="dark:text-zinc-400 text-xs font-medium">
+          Max size 1MB, Rate limited to 5 snippets a day per user
         </p>
         if errExist {
           <div class="mt-4 text-sm font-medium text-red-600">{errMsg}</div>

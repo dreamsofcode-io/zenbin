@@ -1,6 +1,5 @@
 //go:generate tailwindcss -i ./static/css/input.css -o ./static/css/style.css --minify
 //go:generate templ generate
-//go:generate sqlc generate
 package main
 
 import (
