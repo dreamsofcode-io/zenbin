@@ -19,7 +19,11 @@ jobs:
           go-version: '1.23.x'
       - name: Install dependencies
         run: go get .
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+      - name: Install tailwindcss
+        run: apt install tailwindcss
       - name: Ensure Builds Correctly
-        run: go build -v ./...
+        run: make build
       - name: Test with the Go CLI
         run: go test
