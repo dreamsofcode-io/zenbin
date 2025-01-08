@@ -1,0 +1,23 @@
+[Unit]
+Description=Zenbin Service
+After=network.target valkey-server.service
+Requires=valkey-server.service
+
+[Service]
+ExecStart=/home/deploy/production/zenbin
+WorkingDirectory=/home/deploy/production
+User=deploy
+Group=deploy
+Environment="PORT=3000"
+Environment="REDIS_URL=redis://localhost:6379"
+LimitNOFILE=65536
+Restart=on-failure
+TimeoutSec=30
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=yes
+NoNewPrivileges=true
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
