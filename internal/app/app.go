@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -76,7 +77,7 @@ func (a *App) Start(ctx context.Context) error {
 		flash.Middleware,
 	)
 
-	port := 3000
+	port := getPort(3000)
 	srv := &http.Server{
 		Addr:           fmt.Sprintf(":%d", port),
 		Handler:        middlewares(router),
@@ -110,4 +111,18 @@ func (a *App) Start(ctx context.Context) error {
 	srv.Shutdown(sCtx)
 
 	return nil
+}
+
+func getPort(defaultPort int) int {
+	portStr, ok := os.LookupEnv("PORT")
+	if !ok {
+		return defaultPort
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return defaultPort
+	}
+
+	return port
 }
