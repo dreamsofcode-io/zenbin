@@ -39,8 +39,8 @@ rollback_deployment() {
     echo "No previous binary to roll back to."
   fi
 
-  # wait to restart the command
-  sleep 1
+  # wait to restart the services
+  sleep 10
 
   # Restart all services with the previous binary
   for port in "${PORTS[@]}"; do

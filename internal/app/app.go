@@ -37,7 +37,7 @@ func must[T any](x T, err error) T {
 
 // New creates a new instance of the application.
 func New(logger *slog.Logger, config Config, files fs.FS) (*App, error) {
-	redisURL, ok := os.LookupEnv("REDISS_URL")
+	redisURL, ok := os.LookupEnv("REDIS_URL")
 	if !ok {
 		return nil, fmt.Errorf("Must set redis URL")
 	}
