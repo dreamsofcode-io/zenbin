@@ -14,7 +14,7 @@ RELEASES_DIR="/home/deploy/releases"
 DEPLOY_BIN="/home/deploy/production/zenbin"
 SERVICE_NAME="zenbin"
 BINARY_NAME="zenbin-${COMMIT_HASH}"
-PORTS=(3000 3001 3002)
+declare -a PORTS=("3000" "3001" "3002")
 
 # Check if the binary exists
 if [ ! -f "${RELEASES_DIR}/${BINARY_NAME}" ]; then
@@ -24,7 +24,7 @@ fi
 
 # Keep a reference to the previous binary from the symlink
 if [ -L "${DEPLOY_BIN}" ]; then
-  PREVIOUS=$(readlink -f "${DEPLOY_DIR}/${SYMLINK_NAME}")
+  PREVIOUS=$(readlink -f $DEPLOY_BIN)
   echo "Current binary is ${PREVIOUS}, saved for rollback."
 else
   echo "No symbolic link found, no previous binary to backup."
@@ -40,7 +40,7 @@ rollback_deployment() {
   fi
 
   # Restart all services with the previous binary
-  for port in $PORTS; do
+  for port in "${PORTS[@]}"; do
     SERVICE="${SERVICE_NAME}@${port}.service"
     echo "Restarting $SERVICE..."
     sudo systemctl restart $SERVICE
@@ -84,7 +84,7 @@ restart_service() {
   echo "${SERVICE}.service restarted successfully."
 }
 
-for port in $PORTS; do
+for port in "${PORTS[@]}"; do
   restart_service $port
 done
 
