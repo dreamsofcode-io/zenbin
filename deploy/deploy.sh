@@ -12,7 +12,7 @@ fi
 COMMIT_HASH=$1
 RELEASES_DIR="/home/deploy/releases"
 DEPLOY_DIR="/home/deploy/production/zenbin"
-SERVICE_NAME="zenbin.service"
+SERVICE_NAME="zenbin"
 BINARY_NAME="zenbin-${COMMIT_HASH}"
 
 # Check if the binary exists
@@ -25,8 +25,11 @@ fi
 echo "Promoting ${BINARY_NAME} to ${DEPLOY_DIR}..."
 ln -sf "${RELEASES_DIR}/${BINARY_NAME}" "${DEPLOY_DIR}"
 
-# Restart the service
-echo "Restarting the ${SERVICE_NAME} service..."
-sudo systemctl restart ${SERVICE_NAME}
+for port in 3000 3001 3002; do
+  # Restart the service
+  SERVICE="${SERVICE_NAME}@${port}.service"
+  echo "Restarting the ${SERVICE} service..."
+  sudo systemctl restart ${SERVICE}
+done
 
 echo "Deployment completed successfully."
