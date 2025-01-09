@@ -16,6 +16,10 @@ func (a *App) loadPages(router *http.ServeMux) {
 
 	router.HandleFunc("POST /{$}", h.CreateSnippet)
 	router.HandleFunc("GET /{id}", h.GetSnippet)
+
+	router.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 }
 
 func (a *App) loadStaticFiles() (http.Handler, error) {
