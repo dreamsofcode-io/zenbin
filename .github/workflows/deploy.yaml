@@ -13,23 +13,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23.x'
+
       - name: Install dependencies
         run: go get .
+
       - name: Install templ
         run: go install github.com/a-h/templ/cmd/templ@latest
+
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
           node-version: 18  # or 18, or whatever version you need
+
       - name: Install tailwindcss
         run: npm install -g tailwindcss
+
       - name: Generate Step
         run: go generate
-      - name: Build Step
-        run: go build
+
       - name: Test with the Go CLI
         run: go test
+
+      - name: Build Step
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o zenbin-${GITHUB_SHA}
+
+      - name: Deploy binary using SCP
+        env:
+          USER: deploy
+          HOST: zenbin.xyz
+          DIR: /home/deploy/releases
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          echo "Host *" > ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+
+          # Create directory if it doesn't exist
+          ssh -i ~/.ssh/id_rsa $USER@$HOST mkdir -p $DIR
+
+          # Copy the binary to the releases
+          scp -i ~/.ssh/id_rsa zenbin-${GITHUB_SHA} $USER@$HOST:$DIR
+
+          # Run the deploy.sh script on the server
+          ssh -i ~/.ssh/id_rsa $USER@$HOST 'bash -s' < ./deploy/deploy.sh
