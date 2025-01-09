@@ -23,7 +23,7 @@ fi
 
 # Copy the binary to the deployment directory
 echo "Promoting ${BINARY_NAME} to ${DEPLOY_DIR}..."
-cp "${RELEASES_DIR}/${BINARY_NAME}" "${DEPLOY_DIR}"
+ln -sf "${RELEASES_DIR}/${BINARY_NAME}" "${DEPLOY_DIR}"
 
 # Restart the service
 echo "Restarting the ${SERVICE_NAME} service..."
