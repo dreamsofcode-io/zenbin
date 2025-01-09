@@ -64,4 +64,4 @@ jobs:
           scp -i ~/.ssh/id_rsa zenbin-${GITHUB_SHA} $USER@$HOST:$DIR
 
           # Run the deploy.sh script on the server
-          ssh -i ~/.ssh/id_rsa $USER@$HOST 'bash -s' < ./deploy/deploy.sh
+          ssh -i ~/.ssh/id_rsa $USER@$HOST 'bash -s' < ./deploy/deploy.sh $GITHUB_SHA
