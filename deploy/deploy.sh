@@ -27,6 +27,6 @@ ln -sf "${RELEASES_DIR}/${BINARY_NAME}" "${DEPLOY_DIR}"
 
 # Restart the service
 echo "Restarting the ${SERVICE_NAME} service..."
-systemctl restart ${SERVICE_NAME}
+sudo systemctl restart ${SERVICE_NAME}
 
 echo "Deployment completed successfully."
