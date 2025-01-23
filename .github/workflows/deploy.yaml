@@ -30,11 +30,10 @@ jobs:
         with:
           node-version: 18  # or 18, or whatever version you need
 
-      - name: Install tailwindcss
-        run: npm install -g tailwindcss
-
       - name: Generate Step
-        run: go generate
+        run: |
+          npm install -g tailwindcss
+          go generate
 
       - name: Test with the Go CLI
         run: go test
