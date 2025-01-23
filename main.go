@@ -1,4 +1,4 @@
-//go:generate tailwindcss -i ./static/css/input.css -o ./static/css/style.css --minify
+//go:generate npx @tailwindcss/cli -i ./static/css/input.css -o ./static/css/style.css --minify
 //go:generate templ generate
 package main
 
