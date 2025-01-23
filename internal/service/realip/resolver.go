@@ -32,8 +32,10 @@ func (i *XFFIPResolver) ResolveIP(r *http.Request) string {
 
 	if xff != "" {
 		ips := strings.Split(xff, ",")
-		if len(ips) > 0 && i.Depth > 0 && i.Depth <= len(ips) {
-			ip := strings.TrimSpace(ips[len(ips)-i.Depth])
+		depth := i.Depth + 1
+
+		if len(ips) > 0 && depth > 0 && i.Depth <= len(ips) {
+			ip := strings.TrimSpace(ips[len(ips)-depth])
 			if net.ParseIP(ip) != nil {
 				return ip
 			}
