@@ -114,15 +114,10 @@ func (a *App) Start(ctx context.Context) error {
 }
 
 func getPort(defaultPort int) int {
-	portStr, ok := os.LookupEnv("PORT")
-	if !ok {
-		return defaultPort
-	}
-
+	portStr := os.Getenv("PORT")
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		return defaultPort
 	}
-
 	return port
 }

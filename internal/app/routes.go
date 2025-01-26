@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
 
 	"github.com/dreamsofcode-io/zenbin/internal/component"
 	"github.com/dreamsofcode-io/zenbin/internal/handler"
@@ -23,10 +22,6 @@ func (a *App) loadPages(router *http.ServeMux) {
 }
 
 func (a *App) loadStaticFiles() (http.Handler, error) {
-	if os.Getenv("BUILD_MODE") == "develop" {
-		return http.FileServer(http.Dir("./static")), nil
-	}
-
 	static, err := fs.Sub(a.files, "static")
 	if err != nil {
 		return nil, fmt.Errorf("failed to subdir static: %w", err)
