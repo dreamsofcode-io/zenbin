@@ -42,10 +42,17 @@ jobs:
       - name: Build Step
         run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o zenbin-${GITHUB_SHA}
 
+      - name: Connect to Tailnet
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
       - name: Deploy binary using SCP
         env:
           USER: deploy
-          HOST: zenbin.xyz
+          HOST: zenbin-vps
           DIR: /home/deploy/releases
           DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         run: |
